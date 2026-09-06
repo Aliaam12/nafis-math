@@ -1,0 +1,54 @@
+<%- include('layout', { body: `
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="fw-bold text-dark">🔐 لوحة التحكم الخاصة بالمعلمة</h4>
+        <a href="/logout" class="btn btn-sm btn-danger">تسجيل الخروج 🚪</a>
+    </div>
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="table-container">
+                <h5 class="fw-bold text-primary mb-3">➕ إضافة طالبة جديدة</h5>
+                <form action="/admin/student/add" method="POST" class="row g-2 mb-4">
+                    <div class="col-7"><input type="text" name="name" class="form-control" placeholder="اسم الطالبة الثنائي" required></div>
+                    <div class="col-3"><select name="student_class" class="form-select" required><option value="أ">أ</option><option value="ب">ب</option><option value="ج">ج</option></select></div>
+                    <div class="col-2"><button type="submit" class="btn btn-primary w-100">إضافة</button></div>
+                </form>
+                <h5 class="fw-bold text-secondary mb-3">📋 قائمة الطالبات</h5>
+                <div style="max-height: 400px; overflow-y: auto;">
+                    <table class="table table-sm align-middle text-center">
+                        <thead><tr><th>الاسم</th><th>الفصل</th><th>إجراء</th></tr></thead>
+                        <tbody>
+                            \${students.map(s => \`
+                                <tr>
+                                    <td class="text-start">\${s.name}</td><td>\${s.class}</td>
+                                    <td><form action="/admin/student/delete/\${s.id}" method="POST" onsubmit="return confirm('هل أنتِ متأكدة؟')"><button class="btn btn-sm btn-danger py-0">حذف</button></form></td>
+                                </tr>
+                            \`).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="table-container">
+                <h5 class="fw-bold text-success mb-3">📝 إضافة اختبار جديد</h5>
+                <form action="/admin/test/add" method="POST" class="row g-2 mb-4">
+                    <div class="col-9"><input type="text" name="test_name" class="form-control" placeholder="مثال: اختبار الأسبوع الأول" required></div>
+                    <div class="col-3"><button type="submit" class="btn btn-success w-100">إنشاء</button></div>
+                </form>
+                <h5 class="fw-bold text-secondary mb-3">⚙️ رصد الدرجات</h5>
+                <div style="max-height: 400px; overflow-y: auto;">
+                    <ul class="list-group">
+                        \${tests.map(t => \`
+                            <li class="list-group-item d-flex justify-content-between align-middle">
+                                <span>🎯 \${t.test_name}</span>
+                                <div class="btn-group">
+                                    <a href="/admin/test/scores/\${t.id}" class="btn btn-sm btn-outline-primary">رصد الدرجات</a>
+                                    <form action="/admin/test/delete/\${t.id}" method="POST" onsubmit="return confirm('حذف الاختبار بالكامل؟')"><button class="btn btn-sm btn-danger">حذف</button></form></div>
+                            </li>
+                        \`).join('')}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+` }) %>
