@@ -1,0 +1,114 @@
+<%- include('layout', { body: `
+    <style>
+        @media print {
+            body { background-color: #fff !important; color: #000 !important; }
+            .navbar, .btn-group, #studentSearch, .no-print { display: none !important; }
+            .table-container, .chart-container-box { box-shadow: none !important; padding: 0 !important; border: none !important; margin-bottom: 20px; }
+            .hero-section { background: none !important; color: #000 !important; border-bottom: 2px solid #000; padding-bottom: 10px; }
+            .hero-section span { color: #000 !important; }
+            .table th { background-color: #f8f9fa !important; color: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .chart-wrapper { page-break-inside: avoid; }
+        }
+        .chart-container-box { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+    </style>
+    <script src="https://jsdelivr.net"></script>
+
+    <div class="row g-3 mb-4 text-center no-print">
+        <div class="col-6 col-md-3 mx-auto"><div class="card card-stat bg-white p-3"><h6 class="text-muted">إجمالي الطالبات</h6><h3 class="fw-bold text-primary">\${studentCount}</h3></div></div>
+        <div class="col-6 col-md-3 mx-auto"><div class="card card-stat bg-white p-3"><h6 class="text-muted">الامتحانات المنجزة</h6><h3 class="fw-bold text-success">\${testCount}</h3></div></div>
+    </div>
+
+    <div class="row g-3 mb-4 chart-wrapper">
+        <div class="col-md-6"><div class="chart-container-box"><h6 class="fw-bold text-center text-secondary mb-3">📊 مقارنة متوسط درجات الفصول</h6><canvas id="avgChart" style="max-height: 230px;"></canvas></div></div>
+        <div class="col-md-6"><div class="chart-container-box"><h6 class="fw-bold text-center text-secondary mb-3">📈 مشاركات الفصول في الاختبارات</h6><canvas id="countChart" style="max-height: 230px;"></canvas></div></div>
+    </div>
+
+    <div class="row g-3 mb-4 align-items-center">
+        <div class="col-md-6 no-print">
+            <div class="input-group shadow-sm">
+                <span class="input-group-text bg-white border-end-0 text-muted">🔍</span>
+                <input type="text" id="studentSearch" class="form-control border-start-0 py-2 fs-6" placeholder="ابحثي عن اسم الطالبة هنا...">
+            </div>
+        </div>
+        <div class="col-md-6 text-md-end text-center no-print">
+            <button onclick="window.print()" class="btn btn-outline-dark me-2">🖨️ طباعة التقرير الشامل أو حفظه PDF</button>
+            <button onclick="exportToExcel()" class="btn btn-success">📊 تصدير البيانات إلى Excel</button>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-center mb-4 no-print">
+        <div class="btn-group shadow-sm w-100" style="max-width: 600px;">
+            <a href="/?tab=all" class="btn btn-outline-dark \${activeTab === 'all' ? 'active' : ''}">الترتيب العام</a>
+            <a href="/?tab=A" class="btn btn-outline-dark \${activeTab === 'A' ? 'active' : ''}">الفصل (أ)</a>
+            <a href="/?tab=B" class="btn btn-outline-dark \${activeTab === 'B' ? 'active' : ''}">الفصل (ب)</a>
+            <a href="/?tab=C" class="btn btn-outline-dark \${activeTab === 'C' ? 'active' : ''}">الفصل (ج)</a>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <div class="text-center mb-3">
+            <h4 class="fw-bold text-secondary">🥇 كشف درجات وترتيب الطالبات 🥇</h4>
+            <h6 class="text-muted mt-1">القسم الحالي: <span class="badge bg-primary fs-6">\${activeTab === 'all' ? 'الترتيب العام لجميع الفصول' : 'فصل ' + (activeTab === 'A' ? 'أ' : activeTab === 'B' ? 'ب' : 'ج')}</span></h6>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle text-center table-bordered" id="leaderboardTable">
+                <thead class="table-light">
+                    <tr><th>المركز</th><th>اسم الطالبة</th><th>الفصل</th><th>عدد الاختبارات</th><th>المجموع</th><th>المتوسط</th></tr>
+                </thead>
+                <tbody>
+                    \${leaderboard.length === 0 ? '<tr><td colspan="6" class="text-muted py-4">لا توجد بيانات طالبات حالياً</td></tr>' : ''}
+                    \${leaderboard.map(student => \`
+                        <tr class="student-row \${student.rank === 1 ? 'table-warning text-dark fw-bold' : ''}">
+                            <td>\${student.rank === 1 ? '🥇 1' : student.rank === 2 ? '🥈 2' : student.rank === 3 ? '🥉 3' : student.rank}</td>
+                            <td class="fw-bold text-start student-name">\${student.name}</td>
+                            <td>فصل \${student.class}</td>
+                            <td>\${student.test_count}</td>
+                            <td class="text-success fw-bold">\${student.total_score}</td>
+                            <td class="text-info fw-bold">\${student.avg_score}</td>
+                        </tr>
+                    \`).join('')}
+                    <tr id="noResultsRow" style="display: none;"><td colspan="6" class="text-muted py-4">عذراً، لا توجد طالبة بهذا الاسم.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('studentSearch').addEventListener('input', function() {
+            const filter = this.value.trim().toLowerCase();
+            const rows = document.querySelectorAll('.student-row');
+            let hasResults = false;
+            rows.forEach(row => {
+                const nameCell = row.querySelector('.student-name');
+                if (nameCell) {
+                    const nameText = nameCell.textContent || nameCell.innerText;
+                    if (nameText.toLowerCase().includes(filter)) { row.style.display = ''; hasResults = true; } else { row.style.display = 'none'; }
+                }
+            });
+            document.getElementById('noResultsRow').style.display = hasResults ? 'none' : '';
+        });
+
+        function exportToExcel() {
+            let html = document.getElementById("leaderboardTable").outerHTML;
+            let url = 'data:application/vnd.ms-excel;charset=utf-8,\\uFEFF' + encodeURIComponent(html);
+            let downloadLink = document.createElement("a");
+            document.body.appendChild(downloadLink);
+            downloadLink.href = url;
+            downloadLink.download = 'تقرير_تحدي_نافس_الرياضيات_' + new Date().toLocaleDateString('ar-SA') + '.xls';
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+
+        const classLabels = ['فصل (أ)', 'فصل (ب)', 'فصل (ج)'];
+        new Chart(document.getElementById('avgChart'), {
+            type: 'bar',
+            data: { labels: classLabels, datasets: [{ data: [\${chartData['أ'].avg}, \${chartData['ب'].avg}, \${chartData['ج'].avg}], backgroundColor: ['rgba(26, 188, 156, 0.7)', 'rgba(52, 152, 219, 0.7)', 'rgba(155, 89, 182, 0.7)'], borderColor: ['#1abc9c', '#3498db', '#9b59b6'], borderWidth: 1 }] },
+            options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100 } } }
+        });
+        new Chart(document.getElementById('countChart'), {
+            type: 'doughnut',
+            data: { labels: classLabels, datasets: [{ data: [\${chartData['أ'].count}, \${chartData['ب'].count}, \${chartData['ج'].count}], backgroundColor: ['#1abc9c', '#3498db', '#9b59b6'] }] },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+        });
+    </script>
+` }) %>
