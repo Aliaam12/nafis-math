@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تحدي نافس الرياضي</title>
+    <link rel="stylesheet" href="https://jsdelivr.net">
+    <link href="https://googleapis.com" rel="stylesheet">
+    <style>
+        body { font-family: 'Tajawal', sans-serif; background-color: #f4f7f6; color: #333; }
+        .navbar { background-color: #2c3e50; }
+        .hero-section { background: linear-gradient(135deg, #34495e, #1abc9c); color: white; padding: 30px 15px; border-radius: 0 0 20px 20px; text-align: center; }
+        .card-stat { border: none; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .table-container { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .medal { font-size: 1.25rem; }
+        .gold { color: #f1c40f; } .silver { color: #bdc3c7; } .bronze { color: #e67e22; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark shadow-sm">
+        <div class="container d-flex justify-content-between">
+            <a class="navbar-brand fw-bold" href="/">📐 تحدي نافس الرياضي</a>
+            <div>
+                <a href="/" class="btn btn-sm btn-outline-light me-2">لوحة الصدارة</a>
+                <a href="/admin" class="btn btn-sm btn-light">بوابة المعلمة 🔐</a>
+            </div>
+        </div>
+    </nav>
+    <div class="container my-3">
+        <div class="hero-section mb-4">
+            <h4 class="fw-bold">المدرسة الابتدائية التاسعة لتحفيظ القرآن</h4>
+            <h2 class="my-2">🏆 منصة تحدي نافس الرياضي 🏆</h2>
+            <div class="d-flex justify-content-center gap-4 mt-3 text-white-50 fs-6">
+                <span><strong>معلمة المادة:</strong> علياء الخيبري</span>
+                <span><strong>مديرة المدرسة:</strong> جواهر الحربي</span>
+            </div>
+        </div>
+        <%- body %>
+    </div>
+    <footer class="text-center py-4 text-muted small">جميع الحقوق محفوظة © ٢٠٢٦ - الابتدائية التاسعة لتحفيظ القرآن</footer>
+    <script src="https://jsdelivr.net"></script>
+</body>
+</html>
